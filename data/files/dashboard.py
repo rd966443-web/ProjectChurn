@@ -74,7 +74,7 @@ st.sidebar.info("""
 👩‍💻 Built by: Ramandeep Chounkaria
 """)
 st.sidebar.markdown("---")
-#st.sidebar.markdown("📂 [GitHub Repo](https://github.com/rd966443-web/Customer-Intelligence-Churn-Prediction-System.git)")
+st.sidebar.markdown("📂 [GitHub Repo](https://github.com/rd966443-web/ProjectChurn.git)")
 st.sidebar.caption("© 2026 Churn Dashboard")
 
 #Home Page
