@@ -9,7 +9,7 @@ import sklearn
 
 # WORKS ON LOCAL + CLOUD
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-model_path = os.path.join(BASE_DIR, "data", "best_model.pkl")
+model_path = os.path.join(BASE_DIR,"data","best_model.pkl")
 model = joblib.load(model_path)
 
 st.set_page_config(page_title="Churn Prediction", layout="wide")
