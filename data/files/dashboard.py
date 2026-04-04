@@ -242,47 +242,9 @@ elif page == "📈Exploratory Data Analysis(EDA)":
 
     #TAB 3 →Workflow
     with tab3:
-        from graphviz import Digraph
-        # Create Digraph
-        dot = Digraph('Project_Pipeline', format='png')
-
-        # Set graph attributes for style
-        dot.attr(rankdir='LR', size='10')  # LR = left to right
-        dot.attr('node', shape='box', style='filled', color='lightblue', fontname='Helvetica')
-
-        # Data Collection & Preprocessing
-        with dot.subgraph(name='cluster_data') as c:
-                c.attr(style='filled', color='lightgrey', label='Data Collection & Preprocessing')
-                c.node('Raw Data')
-                c.node('Cleaning')
-                c.node('Feature Engineering')
-
-        # Model Training
-        with dot.subgraph(name='cluster_model') as c:
-                c.attr(style='filled', color='lightyellow', label='Modeling')
-                c.node('Train/Test Split')
-                c.node('Model Selection')
-                c.node('Hyperparameter Tuning')
-                c.node('Training')
-
-            # Evaluation
-        with dot.subgraph(name='cluster_eval') as c:
-                c.attr(style='filled', color='lightgreen', label='Evaluation & Deployment')
-                c.node('Evaluation Metrics')
-                c.node('Model Deployment')
-
-            # Edges (flow)
-        dot.edge('Raw Data', 'Cleaning')
-        dot.edge('Cleaning', 'Feature Engineering')
-        dot.edge('Feature Engineering', 'Train/Test Split')
-        dot.edge('Train/Test Split', 'Model Selection')
-        dot.edge('Model Selection', 'Hyperparameter Tuning')
-        dot.edge('Hyperparameter Tuning', 'Training')
-        dot.edge('Training', 'Evaluation Metrics')
-        dot.edge('Evaluation Metrics', 'Model Deployment')
-
-            # Render in Streamlit
-        st.graphviz_chart(dot)
+        st.write("""
+            Data → Preprocessing → Model → Prediction → Output
+                """)
         st.success("✅ Now, Go to the Feature Insights Page")
    
 # Feature Insights Page->model konse feature k basis par pred kr rha hai 
