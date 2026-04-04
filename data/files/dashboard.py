@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import joblib
-import shap
+import os
 
-
-model = joblib.load("../best_model.pkl")
+# WORKS ON LOCAL + CLOUD
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+model_path = os.path.join(BASE_DIR, "best_model.pkl")
+model = joblib.load(model_path)
 
 st.set_page_config(page_title="Churn Prediction", layout="wide")
 
@@ -57,7 +59,8 @@ section[data-testid="stSidebar"] {
 """, unsafe_allow_html=True)
 
 # Sidebar Navigation
-st.sidebar.image("../Images/churn_logo.jpg", width='stretch')
+image_path = os.path.join(BASE_DIR, "Images", "churn_logo.jpg")
+st.sidebar.image(image_path, width='stretch')
 st.sidebar.markdown("## 💡 Customer Intelligence & Churn Prediction System")
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 🚀 Control Center")
@@ -97,7 +100,8 @@ if page == "🏠 Home":
         st.markdown("---")
         st.write("**Know your Customers, Stop the Churn**")
         st.markdown("---")
-    st.image("../Images/Customer_Churn.png")
+    home_img = os.path.join(BASE_DIR, "Images", "Customer_Churn.png")
+    st.image(home_img)
 
 #Data Overview
 
@@ -161,8 +165,10 @@ elif page == "📈Exploratory Data Analysis(EDA)":
     st.title("📈Exploratory Data Analysis(EDA)")
 
     # Load dataset
-    final_data= pd.read_csv("../processed/final_dataset.csv") 
-    merged_data= pd.read_csv("../processed/merged_data.csv")
+    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    merged_data_path = os.path.join(BASE_DIR, "processed", "merged_data.csv")
+    final_data= pd.read_csv(final_data_path) 
+    merged_data= pd.read_csv(merged_data_path)
 
     col1, col2, col3 = st.columns(3)
 
@@ -246,13 +252,13 @@ elif page == "📈Exploratory Data Analysis(EDA)":
 
         # Data Collection & Preprocessing
         with dot.subgraph(name='cluster_data') as c:
-            c.attr(style='filled', color='lightgrey', label='Data Collection & Preprocessing')
-            c.node('Raw Data')
-            c.node('Cleaning')
-            c.node('Feature Engineering')
+                c.attr(style='filled', color='lightgrey', label='Data Collection & Preprocessing')
+                c.node('Raw Data')
+                c.node('Cleaning')
+                c.node('Feature Engineering')
 
         # Model Training
-            with dot.subgraph(name='cluster_model') as c:
+        with dot.subgraph(name='cluster_model') as c:
                 c.attr(style='filled', color='lightyellow', label='Modeling')
                 c.node('Train/Test Split')
                 c.node('Model Selection')
@@ -260,20 +266,20 @@ elif page == "📈Exploratory Data Analysis(EDA)":
                 c.node('Training')
 
             # Evaluation
-            with dot.subgraph(name='cluster_eval') as c:
+        with dot.subgraph(name='cluster_eval') as c:
                 c.attr(style='filled', color='lightgreen', label='Evaluation & Deployment')
                 c.node('Evaluation Metrics')
                 c.node('Model Deployment')
 
             # Edges (flow)
-            dot.edge('Raw Data', 'Cleaning')
-            dot.edge('Cleaning', 'Feature Engineering')
-            dot.edge('Feature Engineering', 'Train/Test Split')
-            dot.edge('Train/Test Split', 'Model Selection')
-            dot.edge('Model Selection', 'Hyperparameter Tuning')
-            dot.edge('Hyperparameter Tuning', 'Training')
-            dot.edge('Training', 'Evaluation Metrics')
-            dot.edge('Evaluation Metrics', 'Model Deployment')
+        dot.edge('Raw Data', 'Cleaning')
+        dot.edge('Cleaning', 'Feature Engineering')
+        dot.edge('Feature Engineering', 'Train/Test Split')
+        dot.edge('Train/Test Split', 'Model Selection')
+        dot.edge('Model Selection', 'Hyperparameter Tuning')
+        dot.edge('Hyperparameter Tuning', 'Training')
+        dot.edge('Training', 'Evaluation Metrics')
+        dot.edge('Evaluation Metrics', 'Model Deployment')
 
             # Render in Streamlit
         st.graphviz_chart(dot)
@@ -285,15 +291,13 @@ elif page == "📌 Feature Insights":
     st.title("📌 Feature Importance & Insights")
 
     # Load dataset
-    final_data = pd.read_csv("../processed/final_dataset.csv")
+    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    final_data= pd.read_csv(final_data_path) 
     final_data.columns = final_data.columns.str.strip()
 
     # Drop unnecessary columns safely
     X = final_data.drop(columns=['Churn', 'Customer ID'],errors='ignore')
     y = final_data['Churn']
-
-    # Load model
-    model = joblib.load("../best_model.pkl")
 
     # Extract pipeline parts
     try:
@@ -337,26 +341,6 @@ elif page == "📌 Feature Insights":
     else:
         st.info("Feature importance not available for this model.")
 
-    #shap explanation->SHapley Additive exPlanations
-    #SHAP tells you how much each feature contributed to a prediction
-    st.subheader("🤔 SHAP Explanation for Sample Customers")
-    try:
-        # Small sample (VERY IMPORTANT - Kernel is slow)
-        sample_data = X_transformed[:100]
-        # Use KernelExplainer (model-agnostic)->hr model k saath kam krta hai
-        explainer = shap.KernelExplainer(final_model.predict, sample_data)
-        shap_values = explainer.shap_values(sample_data)
-        fig, ax = plt.subplots()
-        # For binary classification
-        if isinstance(shap_values, list):
-         shap.summary_plot(shap_values[1], sample_data, show=False)
-        else:
-         shap.summary_plot(shap_values, sample_data, show=False)
-        st.pyplot(fig)
-    except Exception as e:
-        st.warning(f"⚠️ SHAP explanation not available: {e}")
-    st.success("✅ Now, Go to the Customer Segments Page")
-
 # Customer Segments Page
 
 elif page == "📌 Customer Segments":
@@ -367,8 +351,10 @@ elif page == "📌 Customer Segments":
     from sklearn.preprocessing import StandardScaler, OneHotEncoder
     
     # Load dataset
-    raw_data=pd.read_csv("../processed/merged_data.csv")
-    final_data= pd.read_csv("../processed/final_dataset.csv") 
+    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    merged_data_path = os.path.join(BASE_DIR, "processed", "merged_data.csv")
+    final_data= pd.read_csv(final_data_path) 
+    raw_data= pd.read_csv(merged_data_path)
     
     # Clean column names
     final_data.columns = final_data.columns.str.strip()
@@ -376,20 +362,19 @@ elif page == "📌 Customer Segments":
     n_clusters = st.slider("Number of Clusters", 2, 22, 4)
 
     available_features = list(raw_data.columns)
-    default_features = [col for col in ["TotalCharges"] if col in available_features]
+    default_features = [col for col in ["TotalCharges", "MonthlyCharges"] if col in available_features]
      # Feature selection
     features = st.multiselect(
         "Select Features for Clustering",
         options=available_features,
         default=default_features
     )
-
     if st.button("🚀 Run Clustering"):
 
-       if len(features) < 2:
-        st.warning("⚠️ Please select at least 2 features")
+        if len(features) < 2:
+            st.warning("⚠️ Please select at least 2 features")
 
-       else:
+        else:
             # Raw data
             display_data = raw_data[features].copy()
 
@@ -432,7 +417,6 @@ elif page == "📌 Customer Segments":
 
             # Scatter Plot (if 2 features)
             if len(features) == 2:
-                import matplotlib.pyplot as plt
 
                 fig, ax = plt.subplots()
                 ax.scatter(display_data[features[0]], display_data[features[1]], c=clusters)
@@ -491,9 +475,10 @@ elif page=="✔️Prediction":
                 st.warning("⚡ Medium Risk - Monitor customer")
             else:
                 st.success("💚 Low Risk Customer")
-
+            
             if prediction == 0:
-                st.balloons()
+              st.success("🎉 Great! Customer is safe (No Churn)")
+              st.balloons()
 
 
 # Model Performance Page
@@ -505,16 +490,14 @@ elif page == "📊 Model Performance":
     from sklearn.metrics import confusion_matrix,classification_report
 
     # Load data
-    data = pd.read_csv("../processed/final_dataset.csv")
+    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    data= pd.read_csv(final_data_path) 
     data.columns = data.columns.str.strip()#remove extra spaces
 
     # Separate features & target
     X = data.drop(columns=['Customer ID', 'Churn'], errors='ignore')
-    y_true = data['Churn']
-
-    # Load model
-    model=joblib.load("../best_model.pkl")
-
+    y_true = data['Churn'] 
+    
     #Match training columns
     try:
         expected_cols = model.feature_names_in_
