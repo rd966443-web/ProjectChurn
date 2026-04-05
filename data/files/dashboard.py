@@ -8,8 +8,8 @@ import os
 import sklearn
 
 # WORKS ON LOCAL + CLOUD
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-model_path = os.path.join(BASE_DIR,"best_model.pkl")
+BASE_DIR = os.getcwd()
+model_path = os.path.join(BASE_DIR, "data", "bestt_model.pkl")
 model = joblib.load(model_path)
 
 st.set_page_config(page_title="Churn Prediction", layout="wide")
@@ -414,7 +414,7 @@ elif page=="✔️Prediction":
         st.write(st.session_state["input_data"])
         if st.button("🚀 Predict Churn"):
             # Convert to DataFrame
-            input_df = pd.DataFrame([st.session_state["input_data"]])
+            input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
             
             with st.spinner("🔄 Processing..."):
                 prediction = model.predict(input_df)[0]

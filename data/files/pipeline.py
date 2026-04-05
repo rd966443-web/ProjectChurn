@@ -49,7 +49,7 @@ preprocessor = ColumnTransformer([
 models = {
     "Logistic Regression": LogisticRegression(max_iter=1000, class_weight='balanced'),
     "Random Forest": RandomForestClassifier(n_estimators=100, class_weight='balanced'),
-    "AdaBoost": AdaBoostClassifier(n_estimators=100, random_state=42, learning_rate=0.5, algorithm="SAMME")
+    "AdaBoost": AdaBoostClassifier(n_estimators=100, random_state=42, learning_rate=0.5)
 }
 # SAMME.R uses probabilities
 # SAMME uses class predictions
@@ -142,7 +142,7 @@ else:
         #automatically saved
 
 # Save Final Model 
-joblib.dump(best_model_final, "best_model.pkl")
+joblib.dump(best_model_final, "bestt_model.pkl")
 print("Best model saved successfully!")
 
 
