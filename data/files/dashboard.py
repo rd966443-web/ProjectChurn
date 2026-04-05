@@ -8,12 +8,12 @@ import os
 import sklearn
 
 # WORKS ON LOCAL + CLOUD
-BASE_DIR = os.getcwd()
-model_path = os.path.join(BASE_DIR, "data", "bestt_model.pkl")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))  
+# goes from files → data
+model_path = os.path.join(BASE_DIR, "bestt_model.pkl")
 model = joblib.load(model_path)
 
 st.set_page_config(page_title="Churn Prediction", layout="wide")
-
 # Custom Theme via CSS
 st.markdown("""
 <style>
