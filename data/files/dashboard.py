@@ -8,9 +8,10 @@ import os
 import sklearn
 
 # WORKS ON LOCAL + CLOUD
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
-model_path = os.path.join(ROOT_DIR, "bestt_model.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # data/files
+DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, "..")) # data
+# Model path
+model_path = os.path.join(DATA_DIR, "bestt_model.pkl")
 model = joblib.load(model_path)
 
 st.set_page_config(page_title="Churn Prediction", layout="wide")
@@ -60,8 +61,8 @@ section[data-testid="stSidebar"] {
 """, unsafe_allow_html=True)
 
 # Sidebar Navigation
-image_path = os.path.join(BASE_DIR, "Images", "churn_logo.jpg")
-st.sidebar.image(image_path, width='stretch')
+image_path = os.path.join(DATA_DIR,"Images", "churn_logo.jpg")
+st.sidebar.image(image_path, use_container_width=True)
 st.sidebar.markdown("## 💡 Customer Intelligence & Churn Prediction System")
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 🚀 Control Center")
@@ -101,7 +102,7 @@ if page == "🏠 Home":
         st.markdown("---")
         st.write("**Know your Customers, Stop the Churn**")
         st.markdown("---")
-    home_img = os.path.join(BASE_DIR, "Images", "Customer_Churn.png")
+    home_img = os.path.join(DATA_DIR,"Images", "Customer_Churn.png")
     st.image(home_img)
 
 #Data Overview
@@ -166,8 +167,8 @@ elif page == "📈Exploratory Data Analysis(EDA)":
     st.title("📈Exploratory Data Analysis(EDA)")
 
     # Load dataset
-    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
-    merged_data_path = os.path.join(BASE_DIR, "processed", "merged_data.csv")
+    final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
+    merged_data_path = os.path.join(DATA_DIR,"processed", "merged_data.csv")
     final_data= pd.read_csv(final_data_path) 
     merged_data= pd.read_csv(merged_data_path)
 
@@ -254,7 +255,7 @@ elif page == "📌 Feature Insights":
     st.title("📌 Feature Importance & Insights")
 
     # Load dataset
-    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
     final_data= pd.read_csv(final_data_path) 
     final_data.columns = final_data.columns.str.strip()
 
@@ -314,8 +315,8 @@ elif page == "📌 Customer Segments":
     from sklearn.preprocessing import StandardScaler, OneHotEncoder
     
     # Load dataset
-    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
-    merged_data_path = os.path.join(BASE_DIR, "processed", "merged_data.csv")
+    final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
+    merged_data_path = os.path.join(DATA_DIR,"processed", "merged_data.csv")
     final_data= pd.read_csv(final_data_path) 
     raw_data= pd.read_csv(merged_data_path)
     
@@ -376,7 +377,7 @@ elif page == "📌 Customer Segments":
 
             # Clean Preview 
             st.subheader("📌 Clustered Data Preview")
-            st.dataframe(display_data.head(10), width='stretch')
+            st.dataframe(display_data.head(10), use_container_width=True)
 
             # Scatter Plot (if 2 features)
             if len(features) == 2:
@@ -454,7 +455,7 @@ elif page == "📊 Model Performance":
     from sklearn.metrics import confusion_matrix,classification_report
 
     # Load data
-    final_data_path = os.path.join(BASE_DIR, "processed", "final_dataset.csv")
+    final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
     data= pd.read_csv(final_data_path) 
     data.columns = data.columns.str.strip()#remove extra spaces
 
