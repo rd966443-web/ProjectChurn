@@ -80,6 +80,7 @@ st.sidebar.info("""
 """)
 st.sidebar.markdown("---")
 st.sidebar.markdown("📂 [GitHub Repo](https://github.com/rd966443-web/ProjectChurn.git)")
+st.sidebar.markdown("🔗 [Streamlit Community Cloud](https://rd966443-web-projectchurn-datafilesdashboard-pjhqtu.streamlit.app/)")
 st.sidebar.caption("© 2026 Churn Dashboard")
 
 #Home Page
