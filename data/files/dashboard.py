@@ -62,7 +62,7 @@ section[data-testid="stSidebar"] {
 
 # Sidebar Navigation
 image_path = os.path.join(DATA_DIR,"Images", "churn_logo.jpg")
-st.sidebar.image(image_path, use_container_width=True)
+st.sidebar.image(image_path, width="stretch")
 st.sidebar.markdown("## 💡 Customer Intelligence & Churn Prediction System")
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 🚀 Control Center")
@@ -377,7 +377,7 @@ elif page == "📌 Customer Segments":
 
             # Clean Preview 
             st.subheader("📌 Clustered Data Preview")
-            st.dataframe(display_data.head(10), use_container_width=True)
+            st.dataframe(display_data.head(10), width="stretch")
 
             # Scatter Plot (if 2 features)
             if len(features) == 2:
