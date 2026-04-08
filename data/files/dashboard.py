@@ -6,6 +6,9 @@ import pandas as pd
 import joblib
 import os
 import sklearn
+import connection
+
+connection.create_table()
 
 # WORKS ON LOCAL + CLOUD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # data/files
@@ -422,6 +425,19 @@ elif page=="✔️Prediction":
             with st.spinner("🔄 Processing..."):
                 prediction = model.predict(input_df)[0]
                 probability = model.predict_proba(input_df)[0][1]
+            
+            #Database Save
+            try:
+                connection.insert_data(
+                   st.session_state["input_data"],
+                   int(prediction),
+                   float(probability)
+                )
+                st.success("✅ Data inserted successfully")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+                        
+            st.success("✅ Data saved to database successfully!")
 
             st.subheader("📊 Prediction Result")
             # Result UI
