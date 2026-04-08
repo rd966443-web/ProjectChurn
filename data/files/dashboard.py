@@ -8,7 +8,9 @@ import os
 import sklearn
 import connection
 
-connection.create_table()
+if "db_created" not in st.session_state:
+    connection.create_table()
+    st.session_state["db_created"] = True
 
 # WORKS ON LOCAL + CLOUD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # data/files
@@ -76,6 +78,7 @@ page = st.sidebar.radio("🚀 Explore App", [
     "📌 Feature Insights",
     "📌 Customer Segments",
     "✔️Prediction",
+    "📂 Saved Data",
     "📊 Model Performance"
 ])
 st.sidebar.info("""
@@ -251,6 +254,7 @@ elif page == "📈Exploratory Data Analysis(EDA)":
         st.write("""
             Data → Preprocessing → Model → Prediction → Output
                 """)
+        st.success("✅ Data is collected and saved in Database")
         st.success("✅ Now, Go to the Feature Insights Page")
    
 # Feature Insights Page->model konse feature k basis par pred kr rha hai 
@@ -433,7 +437,6 @@ elif page=="✔️Prediction":
                    int(prediction),
                    float(probability)
                 )
-                st.success("✅ Data inserted successfully")
             except Exception as e:
                 st.error(f"❌ Error: {e}")
                         
@@ -462,6 +465,25 @@ elif page=="✔️Prediction":
               st.success("🎉 Great! Customer is safe (No Churn)")
               st.balloons()
 
+elif page == "📂 Saved Data":
+    st.title("📂 Saved Customer Data in Database")
+
+    data = connection.fetch_data()
+
+    if data:
+        df = pd.DataFrame(data, columns=[
+            "CustomerID","Gender","Age","SeniorCitizen","Partner","Dependents","Tenure",
+            "PhoneService","MultipleLines","InternetService",
+            "OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport",
+            "StreamingTV","StreamingMovies","Contract","PaperlessBilling",
+            "PaymentMethod","MonthlyCharges","TotalCharges",
+            "Prediction","Probability"
+        ])
+
+        st.dataframe(df, use_container_width=True)
+
+    else:
+        st.warning("No data found in database")
 
 # Model Performance Page
 

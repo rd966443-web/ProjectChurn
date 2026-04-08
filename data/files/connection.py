@@ -11,7 +11,7 @@ def create_table():
     cur=con.cursor()
     cur.execute("""
     create table if not exists data_overview(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
         Gender TEXT,
         Age INTEGER,
         SeniorCitizen INTEGER,
@@ -80,7 +80,16 @@ def insert_data(data,prediction,probability):
     except Exception as e:
         print("DB Error:", e)
     finally:
-        con.close()
+        if con:
+            con.close()
+
+import pandas as pd
+
+def fetch_data():
+    con = get_connection()
+    df = pd.read_sql("SELECT * FROM data_overview", con)
+    con.close()
+    return df
 
                 
     
