@@ -1,9 +1,12 @@
 import sqlite3
 import pandas as pd
+import os
 
 #connect database
 def get_connection():
-    con=sqlite3.connect("dbchurn.db")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(BASE_DIR, "dbchurn.db")
+    con = sqlite3.connect(db_path)
     return con
 
 #create table
