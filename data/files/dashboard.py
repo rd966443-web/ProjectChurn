@@ -436,6 +436,7 @@ elif page=="✔️Prediction":
                    int(prediction),
                    float(probability)
                 )
+                st.success("✅ Data saved to database successfully!")
             except Exception as e:
                 st.error(f"❌ Error: {e}")
                         
@@ -470,6 +471,10 @@ elif page == "📂 Saved Data":
     # Show data
     df = connection.fetch_data()
     st.dataframe(df, use_container_width=True)
+    if not df.empty:
+        st.write(df)
+    else:
+        st.warning("No data found")
     
     st.markdown("---")
     st.markdown("## 📊 Live Dashboard Stats")
@@ -481,18 +486,40 @@ elif page == "📂 Saved Data":
     st.markdown("---")
 
     st.subheader("✏️ Update Prediction")
-    update_id = st.number_input("Enter CustomerID", step=1)
+    update_id = st.number_input("Enter Customer ID", min_value=1, step=1,help="Enter ID from table above")
     new_prediction = st.selectbox("Prediction", [0, 1])
     new_probability = st.slider("Probability", 0.0, 1.0, 0.5)
     if st.button("Update"):
-        connection.update_prediction(update_id, new_prediction, new_probability)
-        st.success("✅ Record updated successfully")
-    data = connection.fetch_data()
-    if not data.empty:
-        st.write(data)
-    else:
-        st.warning("No data found")
-  
+        result=connection.update_prediction(update_id, new_prediction, new_probability)
+        if result:
+           st.success("✅ Record updated successfully")
+           st.toast("Data refreshed 🔄")
+           st.rerun()  
+        else:
+           st.error("❌ CustomerID not found")
+    
+    st.subheader("🔍 Search Data")
+    keyword = st.text_input("Search by Gender or Payment Method")
+    if st.button("Search"):
+        results = connection.search_data(keyword)
+        if not results.empty:
+            st.dataframe(results, use_container_width=True)
+        else:
+            st.warning("No results found")
+
+    st.subheader("🗑️ Delete Record")
+    delete_id = st.number_input("Enter ID to delete", min_value=1, step=1, key="delete")
+
+    if st.button("Delete"):
+        result = connection.delete_data(delete_id)
+
+        if result:
+            st.warning("🗑️ Record deleted successfully")
+            st.rerun()
+        else:
+            st.error("❌ ID not found")
+
+
 # Model Performance Page
 
 elif page == "📊 Model Performance":

@@ -98,23 +98,24 @@ def delete_data(customer_id):
     cur = con.cursor()
     cur.execute("DELETE FROM data_overview WHERE id = ?", (customer_id,))
     con.commit()
+    if cur.rowcount == 0:
+        con.close()
+        return False   
     con.close()
+    return True    
 
-#serch data
+#search data
 def search_data(keyword):
     con = get_connection()
-    cur = con.cursor()
 
     query = """
     SELECT * FROM data_overview
     WHERE Gender LIKE ? OR PaymentMethod LIKE ?
     """
-
-    cur.execute(query, (f"%{keyword}%", f"%{keyword}%"))
-    rows = cur.fetchall()
-
+    df = pd.read_sql(query, con, params=(f"%{keyword}%", f"%{keyword}%"))
     con.close()
-    return rows
+    return df
+
 
 #stats data->gives summary
 def get_stats():
@@ -144,7 +145,13 @@ def update_prediction(customer_id, prediction, probability):
     """, (prediction, probability, customer_id))
 
     con.commit()
+
+    if cur.rowcount == 0:
+        con.close()
+        return False
     con.close()
+    return True
+
 
 
 
