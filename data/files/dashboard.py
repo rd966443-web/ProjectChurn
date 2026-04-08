@@ -470,21 +470,11 @@ elif page == "📂 Saved Data":
 
     data = connection.fetch_data()
 
-    if data:
-        df = pd.DataFrame(data, columns=[
-            "CustomerID","Gender","Age","SeniorCitizen","Partner","Dependents","Tenure",
-            "PhoneService","MultipleLines","InternetService",
-            "OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport",
-            "StreamingTV","StreamingMovies","Contract","PaperlessBilling",
-            "PaymentMethod","MonthlyCharges","TotalCharges",
-            "Prediction","Probability"
-        ])
-
-        st.dataframe(df, use_container_width=True)
-
+    if not data.empty:
+        st.write(data)
     else:
-        st.warning("No data found in database")
-
+        st.warning("No data found")
+  
 # Model Performance Page
 
 elif page == "📊 Model Performance":
