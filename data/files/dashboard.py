@@ -165,9 +165,9 @@ elif page == "📊 Data Overview":
         "MonthlyCharges": MonthlyCharges,
         "TotalCharges": TotalCharges
     })
-
     if st.button("💾 Save Data for Prediction"):
-        st.success("✅ Data saved successfully in DB! Now go to ✔️ EDA page to Identify key factors affect Churn")
+        st.info("ℹ️ Data saved temporarily. Go to Prediction page to store in database.")
+    
 
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
@@ -439,8 +439,6 @@ elif page=="✔️Prediction":
                 st.success("✅ Data saved to database successfully!")
             except Exception as e:
                 st.error(f"❌ Error: {e}")
-                        
-            st.success("✅ Data saved to database successfully!")
 
             st.subheader("📊 Prediction Result")
             # Result UI
@@ -470,26 +468,26 @@ elif page == "📂 Saved Data":
 
     # Show data
     df = connection.fetch_data()
-    st.dataframe(df, use_container_width=True)
+
     if not df.empty:
-        st.write(df)
+        st.dataframe(df, use_container_width=True)
     else:
         st.warning("No data found")
-    
     st.markdown("---")
+    
     st.markdown("## 📊 Live Dashboard Stats")
-    if st.button("📊 Show Stats"):
-        total, avg_prob, high_risk = connection.get_stats()
-        st.metric("👥 Total Customers", total)
-        st.metric("📈 Avg Probability", f"{avg_prob:.2f}")
-        st.metric("⚠️ High Risk Customers", high_risk)
+    total, avg_prob, high_risk = connection.get_stats()
+    col1, col2, col3 = st.columns(3)
+    col1.metric("👥 Total Customers", total)
+    col2.metric("📈 Avg Probability", f"{avg_prob:.2f}")
+    col3.metric("⚠️ High Risk Customers", high_risk)
     st.markdown("---")
 
     st.subheader("✏️ Update Prediction")
     update_id = st.number_input("Enter Customer ID", min_value=1, step=1,help="Enter ID from table above")
     new_prediction = st.selectbox("Prediction", [0, 1])
     new_probability = st.slider("Probability", 0.0, 1.0, 0.5)
-    if st.button("Update"):
+    if st.button("Update", key="update_btn"):
         result=connection.update_prediction(update_id, new_prediction, new_probability)
         if result:
            st.success("✅ Record updated successfully")
@@ -500,9 +498,10 @@ elif page == "📂 Saved Data":
     
     st.subheader("🔍 Search Data")
     keyword = st.text_input("Search by Gender or Payment Method")
-    if st.button("Search"):
+    if st.button("Search",key="search_btn"):
         results = connection.search_data(keyword)
         if not results.empty:
+            st.success(f"🔍 Found {len(results)} records")
             st.dataframe(results, use_container_width=True)
         else:
             st.warning("No results found")
@@ -510,7 +509,7 @@ elif page == "📂 Saved Data":
     st.subheader("🗑️ Delete Record")
     delete_id = st.number_input("Enter ID to delete", min_value=1, step=1, key="delete")
 
-    if st.button("Delete"):
+    if st.button("Delete", key="delete_btn"):
         result = connection.delete_data(delete_id)
 
         if result:
