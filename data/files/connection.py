@@ -12,7 +12,7 @@ def create_table():
     cur=con.cursor()
     cur.execute("""
     create table if not exists data_overview(
-        CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         Gender TEXT,
         Age INTEGER,
         SeniorCitizen INTEGER,
@@ -133,7 +133,7 @@ def get_stats():
     return total, avg_prob, high_risk
 
 #update data
-def update_prediction(customer_id, prediction, probability):
+def update_prediction(id, prediction, probability):
     con = get_connection()
     cur = con.cursor()
 
@@ -141,7 +141,7 @@ def update_prediction(customer_id, prediction, probability):
     UPDATE data_overview
     SET Prediction = ?, Probability = ?
     WHERE CustomerID = ?
-    """, (prediction, probability, customer_id))
+    """, (prediction, probability, id))
 
     con.commit()
     con.close()

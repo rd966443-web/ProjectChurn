@@ -254,7 +254,6 @@ elif page == "📈Exploratory Data Analysis(EDA)":
         st.write("""
             Data → Preprocessing → Model → Prediction → Output
                 """)
-        st.success("✅ Data is collected and saved in Database")
         st.success("✅ Now, Go to the Feature Insights Page")
    
 # Feature Insights Page->model konse feature k basis par pred kr rha hai 
