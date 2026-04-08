@@ -1,4 +1,5 @@
 import sqlite3
+import pandas as pd
 
 #connect database
 def get_connection():
@@ -40,6 +41,7 @@ def create_table():
     con.close()
     return "Table created successfully"
 
+#insert data
 def insert_data(data,prediction,probability):
     try:
         con=get_connection()
@@ -83,13 +85,68 @@ def insert_data(data,prediction,probability):
         if con:
             con.close()
 
-import pandas as pd
-
+#fetch all data
 def fetch_data():
     con = get_connection()
     df = pd.read_sql("SELECT * FROM data_overview", con)
     con.close()
     return df
+
+#delete data
+def delete_data(customer_id):
+    con = get_connection()
+    cur = con.cursor()
+    cur.execute("DELETE FROM data_overview WHERE CustomerID = ?", (customer_id,))
+    con.commit()
+    con.close()
+
+#serch data
+def search_data(keyword):
+    con = get_connection()
+    cur = con.cursor()
+
+    query = """
+    SELECT * FROM data_overview
+    WHERE Gender LIKE ? OR PaymentMethod LIKE ?
+    """
+
+    cur.execute(query, (f"%{keyword}%", f"%{keyword}%"))
+    rows = cur.fetchall()
+
+    con.close()
+    return rows
+
+#stats data->gives summary
+def get_stats():
+    con = get_connection()
+    cur = con.cursor()
+    # Total records
+    cur.execute("SELECT COUNT(*) FROM data_overview")
+    total = cur.fetchone()[0]
+    # Average probability
+    cur.execute("SELECT AVG(Probability) FROM data_overview")
+    avg_prob = cur.fetchone()[0]
+    # High risk customers
+    cur.execute("SELECT COUNT(*) FROM data_overview WHERE Prediction = 1")
+    high_risk = cur.fetchone()[0]
+    con.close()
+    return total, avg_prob, high_risk
+
+#update data
+def update_prediction(customer_id, prediction, probability):
+    con = get_connection()
+    cur = con.cursor()
+
+    cur.execute("""
+    UPDATE data_overview
+    SET Prediction = ?, Probability = ?
+    WHERE CustomerID = ?
+    """, (prediction, probability, customer_id))
+
+    con.commit()
+    con.close()
+
+
 
                 
     

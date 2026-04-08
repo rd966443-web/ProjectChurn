@@ -167,7 +167,7 @@ elif page == "📊 Data Overview":
     })
 
     if st.button("💾 Save Data for Prediction"):
-        st.success("✅ Data saved successfully! Now go to ✔️ EDA page to Identify key factors affect Churn")
+        st.success("✅ Data saved successfully in DB! Now go to ✔️ EDA page to Identify key factors affect Churn")
 
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
@@ -464,12 +464,31 @@ elif page=="✔️Prediction":
             if prediction == 0:
               st.success("🎉 Great! Customer is safe (No Churn)")
               st.balloons()
-
+ 
 elif page == "📂 Saved Data":
     st.title("📂 Saved Customer Data in Database")
 
-    data = connection.fetch_data()
+    # Show data
+    df = connection.fetch_data()
+    st.dataframe(df, use_container_width=True)
+    
+    st.markdown("---")
+    st.markdown("## 📊 Live Dashboard Stats")
+    if st.button("📊 Show Stats"):
+        total, avg_prob, high_risk = connection.get_stats()
+        st.metric("👥 Total Customers", total)
+        st.metric("📈 Avg Probability", f"{avg_prob:.2f}")
+        st.metric("⚠️ High Risk Customers", high_risk)
+    st.markdown("---")
 
+    st.subheader("✏️ Update Prediction")
+    update_id = st.number_input("Enter CustomerID", step=1)
+    new_prediction = st.selectbox("Prediction", [0, 1])
+    new_probability = st.slider("Probability", 0.0, 1.0, 0.5)
+    if st.button("Update"):
+        connection.update_prediction(update_id, new_prediction, new_probability)
+        st.success("✅ Record updated successfully")
+    data = connection.fetch_data()
     if not data.empty:
         st.write(data)
     else:
