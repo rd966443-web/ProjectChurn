@@ -96,7 +96,7 @@ def fetch_data():
 def delete_data(customer_id):
     con = get_connection()
     cur = con.cursor()
-    cur.execute("DELETE FROM data_overview WHERE CustomerID = ?", (customer_id,))
+    cur.execute("DELETE FROM data_overview WHERE id = ?", (customer_id,))
     con.commit()
     con.close()
 
@@ -133,15 +133,15 @@ def get_stats():
     return total, avg_prob, high_risk
 
 #update data
-def update_prediction(id, prediction, probability):
+def update_prediction(customer_id, prediction, probability):
     con = get_connection()
     cur = con.cursor()
 
     cur.execute("""
     UPDATE data_overview
     SET Prediction = ?, Probability = ?
-    WHERE CustomerID = ?
-    """, (prediction, probability, id))
+    WHERE id = ?
+    """, (prediction, probability, customer_id))
 
     con.commit()
     con.close()
