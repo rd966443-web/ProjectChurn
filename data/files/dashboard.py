@@ -516,7 +516,7 @@ elif page == "📂 Saved Data":
     df = connection.fetch_data()
 
     if not df.empty:
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df,width="stretch")
     else:
         st.warning("No data found")
     st.markdown("---")
@@ -548,7 +548,7 @@ elif page == "📂 Saved Data":
         results = connection.search_data(keyword)
         if not results.empty:
             st.success(f"🔍 Found {len(results)} records")
-            st.dataframe(results, use_container_width=True)
+            st.dataframe(results,width="stretch")
         else:
             st.warning("No results found")
 
