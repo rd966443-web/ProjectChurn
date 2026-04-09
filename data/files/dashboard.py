@@ -8,13 +8,15 @@ import os
 import sklearn
 import connection
 
-if "db_created" not in st.session_state:
-    connection.create_table()
-    st.session_state["db_created"] = True
+if "db_initialized" not in st.session_state:
+    connection.create_table()        # data table
+    connection.create_user_table()   # user table
+    st.session_state["db_initialized"] = True
 
 # WORKS ON LOCAL + CLOUD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # data/files
 DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, "..")) # data
+
 # Model path
 model_path = os.path.join(DATA_DIR, "bestt_model.pkl")
 model = joblib.load(model_path)
@@ -67,6 +69,47 @@ section[data-testid="stSidebar"] {
 
 # Sidebar Navigation
 image_path = os.path.join(DATA_DIR,"Images", "churn_logo.jpg")
+
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+
+if "logout_msg" in st.session_state:
+    st.success(st.session_state["logout_msg"])
+    del st.session_state["logout_msg"]
+
+if not st.session_state["logged_in"]:
+    st.title("🔒 Login/Sign Up")
+
+    menu=["Login","Sign Up"]
+    choice=st.selectbox("Select Option",menu)
+
+    username=st.text_input("Username")
+    password=st.text_input("Password",type="password")
+
+    if choice=="Sign Up":
+        if st.button("Create Account"):
+            if not username or not password:
+                st.warning("⚠️ Please enter username and password")
+            else:
+                if connection.signup_user(username, password):
+                    st.success("✅ Account created successfully! Please Login.")
+                else:
+                    st.error("❌ Username already exists")
+        
+    elif choice=="Login":
+        if st.button("Login"):
+            if not username or not password:
+                st.warning("⚠️ Please enter username and password")
+            else:
+                user = connection.login_user(username,password)
+                if user:
+                    st.success("✅Logged in successfully!")
+                    st.session_state["logged_in"]=True
+                    st.rerun()
+                else:
+                    st.error("❌Invalid Credentials")
+    st.stop()  #stop further execution until login
+
 st.sidebar.image(image_path, width="stretch")
 st.sidebar.markdown("## 💡 Customer Intelligence & Churn Prediction System")
 st.sidebar.markdown("---")
@@ -81,6 +124,10 @@ page = st.sidebar.radio("🚀 Explore App", [
     "📂 Saved Data",
     "📊 Model Performance"
 ])
+if st.sidebar.button("🚪 Logout"):
+    st.session_state["logged_in"] = False
+    st.session_state["logout_msg"] = "👋 Logged out successfully!"
+    st.rerun()
 st.sidebar.info("""
 👩‍💻 Built by: Ramandeep Chounkaria
 """)
@@ -166,9 +213,8 @@ elif page == "📊 Data Overview":
         "TotalCharges": TotalCharges
     })
     if st.button("💾 Save Data for Prediction"):
-        st.info("ℹ️ Data saved temporarily. Go to Prediction page to store in database.")
+        st.success("✅ Data captured successfully! Now go to Prediction page")
     
-
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
     st.title("📈Exploratory Data Analysis(EDA)")

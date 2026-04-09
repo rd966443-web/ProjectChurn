@@ -6,7 +6,7 @@ import os
 def get_connection():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "dbchurn.db")
-    con = sqlite3.connect(db_path)
+    con = sqlite3.connect(db_path, check_same_thread=False)
     return con
 
 #create table
@@ -83,7 +83,7 @@ def insert_data(data,prediction,probability):
         ))
         con.commit()
     except Exception as e:
-        print("DB Error:", e)
+        raise Exception(e)
     finally:
         if con:
             con.close()
@@ -129,7 +129,7 @@ def get_stats():
     total = cur.fetchone()[0]
     # Average probability
     cur.execute("SELECT AVG(Probability) FROM data_overview")
-    avg_prob = cur.fetchone()[0]
+    avg_prob = cur.fetchone()[0] or 0
     # High risk customers
     cur.execute("SELECT COUNT(*) FROM data_overview WHERE Prediction = 1")
     high_risk = cur.fetchone()[0]
@@ -154,6 +154,40 @@ def update_prediction(customer_id, prediction, probability):
         return False
     con.close()
     return True
+
+def create_user_table():
+    con=get_connection()
+    cur=con.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT
+    )
+    """)
+    con.commit()
+    con.close()
+
+#signup function
+def signup_user(username,password):
+    try:
+        con=get_connection()
+        cur=con.cursor()
+        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        con.commit()
+        con.close()
+        return True
+    except:
+        return False
+    
+def login_user(username,password):
+    con=get_connection()
+    cur=con.cursor()
+    cur.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+    user = cur.fetchone()
+    con.close()
+    return user
+
 
 
 
