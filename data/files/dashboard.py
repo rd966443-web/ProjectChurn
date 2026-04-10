@@ -25,12 +25,6 @@ st.set_page_config(page_title="Churn Prediction", layout="wide")
 # Custom Theme via CSS
 st.markdown("""
 <style>
-/* Main background */
-.stApp {
-    background-color: #0E1117;
-    color: #FAFAFA;
-}
-
 /* Sidebar */
 section[data-testid="stSidebar"] {
     background-color: #262730;
@@ -76,18 +70,11 @@ if "logged_in" not in st.session_state:
 if "logout_msg" in st.session_state:
     st.success(st.session_state["logout_msg"])
     del st.session_state["logout_msg"]
-
-background_img = os.path.join(DATA_DIR,"Images", "Login_Signup.jpg")
-st.markdown(f"""
-<style>
-.stApp {{
-    background: url("file:///{background_img}") no-repeat center center fixed;
-    background-size: cover;
-}}
-</style>
-""", unsafe_allow_html=True)
-
+    
 if not st.session_state["logged_in"]:
+    bg_img = os.path.join(DATA_DIR, "Images", "Login_Signup.jpg")
+    st.image(bg_img, use_container_width=True)
+
     st.title("🔒 Login/Sign Up")
 
     menu=["Login","Sign Up"]
