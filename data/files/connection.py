@@ -2,11 +2,16 @@ import sqlite3
 import pandas as pd
 import os
 
+import hashlib
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+# SHA-256
+
 #connect database
 def get_connection():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "dbchurn.db")
-    con = sqlite3.connect(db_path, check_same_thread=False)
+    con=sqlite3.connect(db_path, check_same_thread=False, timeout=10)
     return con
 
 #create table
@@ -16,6 +21,7 @@ def create_table():
     cur.execute("""
     create table if not exists data_overview(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
         Gender TEXT,
         Age INTEGER,
         SeniorCitizen INTEGER,
@@ -45,19 +51,20 @@ def create_table():
     return "Table created successfully"
 
 #insert data
-def insert_data(data,prediction,probability):
+def insert_data(username,data,prediction,probability):
     try:
         con=get_connection()
         cur=con.cursor()
         cur.execute("""
         INSERT INTO data_overview (
-            Gender,Age,SeniorCitizen,Partner,Dependents,Tenure,
+            username,Gender,Age,SeniorCitizen,Partner,Dependents,Tenure,
             PhoneService,MultipleLines,InternetService,
             OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,
             StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,
             MonthlyCharges,TotalCharges,Prediction,Probability)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,(
+            username,
             data["Gender"], 
             data["Age"], 
             data["SeniorCitizen"], 
@@ -89,72 +96,87 @@ def insert_data(data,prediction,probability):
             con.close()
 
 #fetch all data
-def fetch_data():
+def fetch_data(username):
     con = get_connection()
-    df = pd.read_sql("SELECT * FROM data_overview", con)
-    con.close()
-    return df
+    try:
+        query = "SELECT * FROM data_overview WHERE username = ?"
+        df = pd.read_sql(query, con, params=(username,))
+        return df
+    finally:
+        con.close()
 
 #delete data
-def delete_data(customer_id):
+def delete_data(username, customer_id):
     con = get_connection()
-    cur = con.cursor()
-    cur.execute("DELETE FROM data_overview WHERE id = ?", (customer_id,))
-    con.commit()
-    if cur.rowcount == 0:
+    try:
+        cur = con.cursor()
+        cur.execute(
+            "DELETE FROM data_overview WHERE id = ? AND username = ?",
+            (customer_id, username)
+        )
+        con.commit()
+        return cur.rowcount > 0
+    finally:
         con.close()
-        return False   
-    con.close()
-    return True    
 
 #search data
-def search_data(keyword):
+def search_data(username, keyword):
     con = get_connection()
-
-    query = """
-    SELECT * FROM data_overview
-    WHERE Gender LIKE ? OR PaymentMethod LIKE ?
-    """
-    df = pd.read_sql(query, con, params=(f"%{keyword}%", f"%{keyword}%"))
-    con.close()
-    return df
-
+    try:
+        query = """
+        SELECT * FROM data_overview
+        WHERE username = ?
+        AND (
+            LOWER(Gender) LIKE LOWER(?) OR 
+            LOWER(PaymentMethod) LIKE LOWER(?) OR 
+            LOWER(Contract) LIKE LOWER(?) OR 
+            LOWER(InternetService) LIKE LOWER(?)
+        )
+            """
+        df = pd.read_sql(
+            query,
+            con,
+            params=(username, f"%{keyword}%", f"%{keyword}%", f"%{keyword}%", f"%{keyword}%")
+        )
+        return df
+    finally:
+        con.close()
 
 #stats data->gives summary
-def get_stats():
+def get_stats(username):
     con = get_connection()
-    cur = con.cursor()
-    # Total records
-    cur.execute("SELECT COUNT(*) FROM data_overview")
-    total = cur.fetchone()[0]
-    # Average probability
-    cur.execute("SELECT AVG(Probability) FROM data_overview")
-    avg_prob = cur.fetchone()[0] or 0
-    # High risk customers
-    cur.execute("SELECT COUNT(*) FROM data_overview WHERE Prediction = 1")
-    high_risk = cur.fetchone()[0]
-    con.close()
-    return total, avg_prob, high_risk
+    try:
+        cur = con.cursor()
+
+        cur.execute("SELECT COUNT(*) FROM data_overview WHERE username=?", (username,))
+        total = cur.fetchone()[0]
+
+        cur.execute("SELECT AVG(Probability) FROM data_overview WHERE username=?", (username,))
+        avg_prob = cur.fetchone()[0] or 0
+
+        cur.execute("SELECT COUNT(*) FROM data_overview WHERE Probability > 0.7 AND username=?", (username,))
+        high_risk = cur.fetchone()[0]
+
+        return total, avg_prob, high_risk
+    finally:
+        con.close()
 
 #update data
-def update_prediction(customer_id, prediction, probability):
+def update_prediction(username, customer_id, prediction, probability):
     con = get_connection()
-    cur = con.cursor()
-
-    cur.execute("""
-    UPDATE data_overview
-    SET Prediction = ?, Probability = ?
-    WHERE id = ?
-    """, (prediction, probability, customer_id))
-
-    con.commit()
-
-    if cur.rowcount == 0:
+    try:
+        cur = con.cursor()
+        cur.execute("""
+            UPDATE data_overview
+            SET Prediction = ?, Probability = ?
+            WHERE id = ? AND username = ?
+        """, (prediction, probability, customer_id, username))
+        con.commit()
+        return cur.rowcount != 0
+    finally:
         con.close()
-        return False
-    con.close()
-    return True
 
+#create user table
 def create_user_table():
     con=get_connection()
     cur=con.cursor()
@@ -169,24 +191,37 @@ def create_user_table():
     con.close()
 
 #signup function
-def signup_user(username,password):
+def signup_user(username, password):
+    con = get_connection()
     try:
-        con=get_connection()
-        cur=con.cursor()
-        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        cur = con.cursor()
+        hashed = hash_password(password)
+        cur.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, hashed)
+        )
         con.commit()
-        con.close()
         return True
     except:
         return False
-    
-def login_user(username,password):
-    con=get_connection()
-    cur=con.cursor()
-    cur.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cur.fetchone()
-    con.close()
-    return user
+    finally:
+        con.close()
+
+#login function
+def login_user(username, password):
+    con = get_connection()
+    try:
+        cur = con.cursor()
+        hashed = hash_password(password)
+        cur.execute(
+            "SELECT * FROM users WHERE username = ? AND password = ?",
+            (username, hashed)
+        )
+        user = cur.fetchone()
+        return user is not None
+    finally:
+        con.close() 
+
 
 
 

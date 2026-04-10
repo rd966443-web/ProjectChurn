@@ -104,7 +104,8 @@ if not st.session_state["logged_in"]:
                 user = connection.login_user(username,password)
                 if user:
                     st.success("✅Logged in successfully!")
-                    st.session_state["logged_in"]=True
+                    st.session_state["logged_in"] = True
+                    st.session_state["username"] = username 
                     st.rerun()
                 else:
                     st.error("❌Invalid Credentials")
@@ -213,7 +214,8 @@ elif page == "📊 Data Overview":
         "TotalCharges": TotalCharges
     })
     if st.button("💾 Save Data for Prediction"):
-        st.success("✅ Data captured successfully! Now go to Prediction page")
+        st.success("✅ Data captured successfully!")
+        st.info("👉 Now go to Prediction page")
     
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
@@ -237,7 +239,7 @@ elif page == "📈Exploratory Data Analysis(EDA)":
     # TAB 1 → Data
     with tab1:
         st.subheader("Dataset Preview")
-        st.dataframe(merged_data.head())
+        st.dataframe(merged_data.head(), width="stretch")
 
         st.download_button(
         label="📥 Download Full Dataset",
@@ -253,7 +255,8 @@ elif page == "📈Exploratory Data Analysis(EDA)":
         st.bar_chart(churn_counts)
 
         st.subheader("👥 Gender vs Churn")
-        final_data["Gender"] = final_data["Gender"].map({0: "Female", 1: "Male"})
+        if final_data["Gender"].dtype != "object":
+            final_data["Gender"] = final_data["Gender"].map({0: "Female", 1: "Male"})
         gender_churn = pd.crosstab(final_data["Gender"], final_data["Churn"])
         gender_churn.columns = ["No Churn", "Churn"]
         st.bar_chart(gender_churn)
@@ -478,6 +481,7 @@ elif page=="✔️Prediction":
             #Database Save
             try:
                 connection.insert_data(
+                   st.session_state["username"],
                    st.session_state["input_data"],
                    int(prediction),
                    float(probability)
@@ -513,7 +517,7 @@ elif page == "📂 Saved Data":
     st.title("📂 Saved Customer Data in Database")
 
     # Show data
-    df = connection.fetch_data()
+    df = connection.fetch_data(st.session_state["username"])
 
     if not df.empty:
         st.dataframe(df,width="stretch")
@@ -522,7 +526,7 @@ elif page == "📂 Saved Data":
     st.markdown("---")
     
     st.markdown("## 📊 Live Dashboard Stats")
-    total, avg_prob, high_risk = connection.get_stats()
+    total, avg_prob, high_risk = connection.get_stats(st.session_state["username"])
     col1, col2, col3 = st.columns(3)
     col1.metric("👥 Total Customers", total)
     col2.metric("📈 Avg Probability", f"{avg_prob:.2f}")
@@ -534,7 +538,7 @@ elif page == "📂 Saved Data":
     new_prediction = st.selectbox("Prediction", [0, 1])
     new_probability = st.slider("Probability", 0.0, 1.0, 0.5)
     if st.button("Update", key="update_btn"):
-        result=connection.update_prediction(update_id, new_prediction, new_probability)
+        result=connection.update_prediction(st.session_state["username"],update_id, new_prediction, new_probability)
         if result:
            st.success("✅ Record updated successfully")
            st.toast("Data refreshed 🔄")
@@ -543,9 +547,9 @@ elif page == "📂 Saved Data":
            st.error("❌ CustomerID not found")
     
     st.subheader("🔍 Search Data")
-    keyword = st.text_input("Search by Gender or Payment Method")
+    keyword = st.text_input("Search by Gender or Payment Method or Contract or InternetService")
     if st.button("Search",key="search_btn"):
-        results = connection.search_data(keyword)
+        results = connection.search_data(st.session_state["username"], keyword)
         if not results.empty:
             st.success(f"🔍 Found {len(results)} records")
             st.dataframe(results,width="stretch")
@@ -553,11 +557,9 @@ elif page == "📂 Saved Data":
             st.warning("No results found")
 
     st.subheader("🗑️ Delete Record")
-    delete_id = st.number_input("Enter ID to delete", min_value=1, step=1, key="delete")
-
+    delete_id = st.number_input("Enter Customer ID to Delete", min_value=1, step=1,help="Enter ID from table above", key="delete_id")
     if st.button("Delete", key="delete_btn"):
-        result = connection.delete_data(delete_id)
-
+        result = connection.delete_data(st.session_state["username"], delete_id)
         if result:
             st.warning("🗑️ Record deleted successfully")
             st.rerun()
