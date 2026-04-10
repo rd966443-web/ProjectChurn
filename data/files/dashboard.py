@@ -77,10 +77,11 @@ if "logout_msg" in st.session_state:
     st.success(st.session_state["logout_msg"])
     del st.session_state["logout_msg"]
 
+background_img=os.path.join(DATA_DIR,"Images", "Login_Signup.jpg")
 st.markdown("""
 <style>
 .stApp {
-    background_img=os.path.join(DATA_DIR,"Images", "Login_Signup.jpg") no-repeat center center fixed;
+    background: url("background_img") no-repeat center center fixed;
     background-size: cover;
 }
 </style>
