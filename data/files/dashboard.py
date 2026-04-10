@@ -77,6 +77,15 @@ if "logout_msg" in st.session_state:
     st.success(st.session_state["logout_msg"])
     del st.session_state["logout_msg"]
 
+st.markdown("""
+<style>
+.stApp {
+    background_img=os.path.join(DATA_DIR,"Images", "Login_Signup.jpg") no-repeat center center fixed;
+    background-size: cover;
+}
+</style>
+""", unsafe_allow_html=True)
+
 if not st.session_state["logged_in"]:
     st.title("🔒 Login/Sign Up")
 
@@ -226,7 +235,7 @@ elif page == "📊 Data Overview":
 elif page == "📈Exploratory Data Analysis(EDA)":
     st.title("📈Exploratory Data Analysis(EDA)")
 
-    st.info("Explore patterns and trends in customer data to understand churn behavior.")
+    st.info("Explore patterns and trends in customer data to understand churn behaviour.")
     st.caption("💡 Look for relationships between features and churn.")
 
     # Load dataset
