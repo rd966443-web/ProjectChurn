@@ -664,7 +664,7 @@ elif page == "📊 Model Performance":
     cm = confusion_matrix(y_true, y_pred)
     st.dataframe(pd.DataFrame(cm,
                               index=["Actual No", "Actual Yes"],
-                              columns=["Predicted No", "Predicted Yes"],width="content"))
+                              columns=["Predicted No", "Predicted Yes"]))
 
     # Classification Report
     st.subheader("📄 Classification Report")
