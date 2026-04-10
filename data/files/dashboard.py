@@ -61,6 +61,12 @@ section[data-testid="stSidebar"] {
 </style>
 """, unsafe_allow_html=True)
 
+#for bg img
+import base64
+def get_base64(img_path):
+    with open(img_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
 # Sidebar Navigation
 image_path = os.path.join(DATA_DIR,"Images", "churn_logo.jpg")
 
@@ -70,11 +76,20 @@ if "logged_in" not in st.session_state:
 if "logout_msg" in st.session_state:
     st.success(st.session_state["logout_msg"])
     del st.session_state["logout_msg"]
-    
-if not st.session_state["logged_in"]:
-    bg_img = os.path.join(DATA_DIR, "Images", "Login_Signup.jpg")
-    st.image(bg_img, use_container_width=True)
 
+if not st.session_state["logged_in"]: 
+
+    background_img = os.path.join(DATA_DIR, "Images", "Login_Signup.jpg")
+    img = get_base64(background_img)
+
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background: url("data:image/jpg;base64,{img}") no-repeat center center fixed;
+        background-size: cover;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     st.title("🔒 Login/Sign Up")
 
     menu=["Login","Sign Up"]
