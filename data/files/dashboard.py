@@ -552,7 +552,7 @@ elif page == "📂 Saved Data":
     df = connection.fetch_data(st.session_state["username"])
 
     if not df.empty:
-        st.dataframe(df,width="stretch")
+        st.dataframe(df,width="content")
          #Download Button
         st.download_button(
         label="📥 Download Data as CSV",
@@ -591,7 +591,7 @@ elif page == "📂 Saved Data":
         results = connection.search_data(st.session_state["username"], keyword)
         if not results.empty:
             st.success(f"🔍 Found {len(results)} records")
-            st.dataframe(results,width="stretch")
+            st.dataframe(results,width="content")
         else:
             st.warning("No results found")
 
@@ -664,7 +664,7 @@ elif page == "📊 Model Performance":
     cm = confusion_matrix(y_true, y_pred)
     st.dataframe(pd.DataFrame(cm,
                               index=["Actual No", "Actual Yes"],
-                              columns=["Predicted No", "Predicted Yes"]))
+                              columns=["Predicted No", "Predicted Yes"],width="content"))
 
     # Classification Report
     st.subheader("📄 Classification Report")
