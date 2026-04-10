@@ -14,7 +14,7 @@ def get_connection():
     con=sqlite3.connect(db_path, check_same_thread=False, timeout=10)
     return con
 
-#create table
+#create data table
 def create_table():
     con=get_connection()
     cur=con.cursor()
@@ -152,7 +152,10 @@ def get_stats(username):
         total = cur.fetchone()[0]
 
         cur.execute("SELECT AVG(Probability) FROM data_overview WHERE username=?", (username,))
-        avg_prob = cur.fetchone()[0] or 0
+        avg_prob = cur.fetchone()[0]
+        if avg_prob is None:
+            avg_prob = 0
+
 
         cur.execute("SELECT COUNT(*) FROM data_overview WHERE Probability > 0.7 AND username=?", (username,))
         high_risk = cur.fetchone()[0]
@@ -227,6 +230,5 @@ def login_user(username, password):
 
 
 
-                
-    
-    
+
+

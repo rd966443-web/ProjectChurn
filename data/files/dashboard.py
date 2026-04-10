@@ -9,8 +9,8 @@ import sklearn
 import connection
 
 if "db_initialized" not in st.session_state:
-    connection.create_table()        # data table
     connection.create_user_table()   # user table
+    connection.create_table()        # data table
     st.session_state["db_initialized"] = True
 
 # WORKS ON LOCAL + CLOUD
@@ -145,6 +145,8 @@ if page == "🏠 Home":
 
     ---
     """)
+    st.info("This dashboard helps analyze customer behaviour and predict customer churn.")
+    st.caption("💡 Use the sidebar to navigate through different sections.")
     col1, col2 = st.columns([2,1])
     with col1:
         st.write("""
@@ -164,6 +166,9 @@ if page == "🏠 Home":
 
 elif page == "📊 Data Overview":
     st.title("📊 Data Overview")
+
+    st.info("Enter customer details carefully. This data will be used for churn prediction.")
+    st.caption("💡 Accurate input gives better prediction results.")
 
     Gender = st.selectbox("Gender", ["Male", "Female"])
     Age=st.number_input("Age",0,100)
@@ -215,11 +220,14 @@ elif page == "📊 Data Overview":
     })
     if st.button("💾 Save Data for Prediction"):
         st.success("✅ Data captured successfully!")
-        st.info("👉 Now go to Prediction page")
+        st.info("👉 For check the prediction, now go to Prediction page")
     
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
     st.title("📈Exploratory Data Analysis(EDA)")
+
+    st.info("Explore patterns and trends in customer data to understand churn behavior.")
+    st.caption("💡 Look for relationships between features and churn.")
 
     # Load dataset
     final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
@@ -310,6 +318,9 @@ elif page == "📈Exploratory Data Analysis(EDA)":
 elif page == "📌 Feature Insights":
     st.title("📌 Feature Importance & Insights")
 
+    st.info("This section shows which features influence the model's prediction the most.")
+    st.caption("💡 Higher importance means stronger impact on churn.")
+
     # Load dataset
     final_data_path = os.path.join(DATA_DIR,"processed", "final_dataset.csv")
     final_data= pd.read_csv(final_data_path) 
@@ -365,6 +376,9 @@ elif page == "📌 Feature Insights":
 
 elif page == "📌 Customer Segments":
     st.title("📌 Customer Segmentation (KMeans Clustering)")
+
+    st.info("Customers are grouped into clusters based on similar behavior.")
+    st.caption("💡 Use this to identify different customer types.")
 
     from sklearn.cluster import KMeans
     from sklearn.compose import ColumnTransformer
@@ -460,8 +474,11 @@ elif page == "📌 Customer Segments":
 elif page=="✔️Prediction":
     st.title("✔️Customer Churn Prediction")
 
+    st.info("Predict whether a customer is likely to churn based on input data.")
+    st.caption("💡 Higher probability means higher churn risk.")
+
     # Show which model is being used
-    st.info("🧠 Prediction Model: **AdaBoostClassifier (Best Model)**")
+    st.markdown("🧠 Prediction Model: **AdaBoostClassifier (Best Model)**")
 
     # Check if data exists
     if "input_data" not in st.session_state:
@@ -516,11 +533,21 @@ elif page=="✔️Prediction":
 elif page == "📂 Saved Data":
     st.title("📂 Saved Customer Data in Database")
 
+    st.info("View and manage all saved customer predictions.")
+    st.caption("💡 You can update, search, or delete records.")
+
     # Show data
     df = connection.fetch_data(st.session_state["username"])
 
     if not df.empty:
         st.dataframe(df,width="stretch")
+         #Download Button
+        st.download_button(
+        label="📥 Download Data as CSV",
+        data=df.to_csv(index=False),
+        file_name="customer_data.csv",
+        mime="text/csv"
+    )
     else:
         st.warning("No data found")
     st.markdown("---")
@@ -529,7 +556,7 @@ elif page == "📂 Saved Data":
     total, avg_prob, high_risk = connection.get_stats(st.session_state["username"])
     col1, col2, col3 = st.columns(3)
     col1.metric("👥 Total Customers", total)
-    col2.metric("📈 Avg Probability", f"{avg_prob:.2f}")
+    col2.metric("📈 Avg Probability", f"{avg_prob:.2f}" if avg_prob else "0.00")
     col3.metric("⚠️ High Risk Customers", high_risk)
     st.markdown("---")
 
@@ -566,12 +593,14 @@ elif page == "📂 Saved Data":
         else:
             st.error("❌ ID not found")
 
-
 # Model Performance Page
 
 elif page == "📊 Model Performance":
     st.title("📊 Model Performance Metrics")
-    
+
+    st.info("Evaluate how well the model performs on the dataset.")
+    st.caption("💡 Focus on accuracy, precision, recall, and ROC-AUC.")
+   
     from sklearn.metrics import accuracy_score,roc_auc_score,precision_score,f1_score,recall_score
     from sklearn.metrics import confusion_matrix,classification_report
 
