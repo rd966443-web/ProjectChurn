@@ -142,7 +142,7 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state["logout_msg"] = "👋 Logged out successfully!"
     st.rerun()
 st.sidebar.info("""
-👩‍💻 Built by: Ramandeep Chounkaria
+👩‍💻 Built by:Ramandeep Chounkaria
 """)
 st.sidebar.markdown("---")
 st.sidebar.markdown("📂 [GitHub Repo](https://github.com/rd966443-web/ProjectChurn.git)")
@@ -251,7 +251,7 @@ elif page == "📈Exploratory Data Analysis(EDA)":
 
     col1.metric("Total Customers", len(final_data))
     col2.metric("Churn Rate", f"{final_data['Churn'].mean()*100:.2f}%")
-    col3.metric("Avg Monthly Charges", f"{final_data['MonthlyCharges'].mean():.2f}")
+    col3.metric("Avg Monthly Charges", f"{merged_data['MonthlyCharges'].mean():.2f}")
     sns.set_style("whitegrid")
     # Tabs Start Here
     tab1, tab2, tab3 = st.tabs(["📊 Data", "📈 Charts", "💻Workflow"])
@@ -499,13 +499,13 @@ elif page=="✔️Prediction":
         st.subheader("📌 Saved Customer Data")
         st.write(st.session_state["input_data"])
         if st.button("🚀 Predict Churn"):
-            input_df = pd.DataFrame([st.session_state["input_data"]])
+            input_data = pd.DataFrame([st.session_state["input_data"]])
             # Align with model features
-            input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+            input_data = input_data.reindex(columns=model.feature_names_in_, fill_value=0)
         
             with st.spinner("🔄 Processing..."):
-                prediction = model.predict(input_df)[0]
-                probability = model.predict_proba(input_df)[0][1]
+                probability = model.predict_proba(input_data)[0][1]
+                prediction = 1 if probability >= 0.5 else 0
             
             #Database Save
             try:
@@ -543,20 +543,22 @@ elif page=="✔️Prediction":
               st.balloons()
  
 elif page == "📂 Saved Data":
-    st.title("📂 Saved Customer Data in Database")
-
+    st.title(f"📂 {st.session_state['username']}'s Saved Predictions")
     st.info("View and manage all saved customer predictions.")
     st.caption("💡 You can update, search, or delete records.")
 
     # Show data
     df = connection.fetch_data(st.session_state["username"])
+    # hide id & username
+    df_display = df.drop(columns=["username"], errors="ignore")
+    df_display = df_display.rename(columns={"id": "Prediction ID"})
 
-    if not df.empty:
-        st.dataframe(df,width="content")
+    if not df_display.empty:
+        st.dataframe(df_display, width="content",hide_index=True)
          #Download Button
         st.download_button(
         label="📥 Download Data as CSV",
-        data=df.to_csv(index=False),
+        data=df_display.to_csv(index=False),
         file_name="customer_data.csv",
         mime="text/csv"
     )
@@ -568,23 +570,51 @@ elif page == "📂 Saved Data":
     total, avg_prob, high_risk = connection.get_stats(st.session_state["username"])
     col1, col2, col3 = st.columns(3)
     col1.metric("👥 Total Customers", total)
-    col2.metric("📈 Avg Probability", f"{avg_prob:.2f}" if avg_prob else "0.00")
+    col2.metric("📈 Avg Probability", f"{avg_prob:.2f}")
     col3.metric("⚠️ High Risk Customers", high_risk)
     st.markdown("---")
 
     st.subheader("✏️ Update Prediction")
-    update_id = st.number_input("Enter Customer ID", min_value=1, step=1,help="Enter ID from table above")
-    new_prediction = st.selectbox("Prediction", [0, 1])
-    new_probability = st.slider("Probability", 0.0, 1.0, 0.5)
-    if st.button("Update", key="update_btn"):
-        result=connection.update_prediction(st.session_state["username"],update_id, new_prediction, new_probability)
-        if result:
-           st.success("✅ Record updated successfully")
-           st.toast("Data refreshed 🔄")
-           st.rerun()  
+    update_id = st.number_input("Enter Prediction ID", min_value=1, step=1)
+
+    if st.button("Fetch Record"):
+        df = connection.fetch_data(st.session_state["username"])
+        row = df[df["id"] == update_id]
+        if row.empty:
+            st.warning("⚠️ Invalid Prediction ID")
         else:
-           st.error("❌ CustomerID not found")
-    
+            st.session_state["update_row"] = row
+
+    if "update_row" in st.session_state:
+        row = st.session_state["update_row"]
+
+        st.write(f"🧠 Old Prediction: {row.iloc[0]['Prediction']}")
+        st.write(f"📈 Old Probability: {row.iloc[0]['Probability']:.2f}")
+
+        new_pred = st.selectbox("New Prediction", [0, 1], key="new_pred")
+        new_prob = st.slider(
+            "New Probability",
+            0.0,
+            1.0,
+            float(row.iloc[0]["Probability"]),
+            key="new_prob"
+        )
+
+        if st.button("Confirm Update"):
+            result = connection.update_prediction(
+                int(row.iloc[0]["id"]),
+                st.session_state["username"],
+                int(new_pred),
+                float(new_prob)
+            )
+
+            if result:
+                st.success("✅ Updated successfully")
+                del st.session_state["update_row"]
+                st.rerun()
+            else:
+                st.error("❌ Update failed")
+
     st.subheader("🔍 Search Data")
     keyword = st.text_input("Search by Gender or Payment Method or Contract or InternetService")
     if st.button("Search",key="search_btn"):
@@ -596,7 +626,7 @@ elif page == "📂 Saved Data":
             st.warning("No results found")
 
     st.subheader("🗑️ Delete Record")
-    delete_id = st.number_input("Enter Customer ID to Delete", min_value=1, step=1,help="Enter ID from table above", key="delete_id")
+    delete_id = st.number_input("Enter Prediction ID to Delete", min_value=1, step=1,help="Enter ID from table above", key="delete_id")
     if st.button("Delete", key="delete_btn"):
         result = connection.delete_data(st.session_state["username"], delete_id)
         if result:

@@ -13,7 +13,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 #Data load
-data=pd.read_csv("data/processed/merged_data.csv")
+data=pd.read_csv("data/processed/final_data.csv")
 
 #data cleaning
 #Remove infinite values

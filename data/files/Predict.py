@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import joblib
 
-model=joblib.load("best_model.pkl")
+model=joblib.load("bestt_model.pkl")
 
 #new data
 data=pd.DataFrame([{

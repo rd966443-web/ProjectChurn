@@ -46,12 +46,32 @@ def create_table():
         Probability REAL
     )
     """)
+    # Index for faster queries
+    cur.execute("""
+    CREATE INDEX IF NOT EXISTS idx_username 
+    ON data_overview(username)
+    """)
     con.commit()
     con.close()
     return "Table created successfully"
 
+#create user table
+def create_user_table():
+    con=get_connection()
+    cur=con.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT
+    )
+    """)
+    con.commit()
+    con.close()
+
 #insert data
 def insert_data(username,data,prediction,probability):
+    con=None
     try:
         con=get_connection()
         cur=con.cursor()
@@ -99,7 +119,7 @@ def insert_data(username,data,prediction,probability):
 def fetch_data(username):
     con = get_connection()
     try:
-        query = "SELECT * FROM data_overview WHERE username = ?"
+        query = "SELECT * FROM data_overview WHERE username = ? ORDER BY id DESC"
         df = pd.read_sql(query, con, params=(username,))
         return df
     finally:
@@ -132,6 +152,7 @@ def search_data(username, keyword):
             LOWER(Contract) LIKE LOWER(?) OR 
             LOWER(InternetService) LIKE LOWER(?)
         )
+        ORDER BY id DESC
             """
         df = pd.read_sql(
             query,
@@ -147,25 +168,29 @@ def get_stats(username):
     con = get_connection()
     try:
         cur = con.cursor()
-
+      
+        # total records
         cur.execute("SELECT COUNT(*) FROM data_overview WHERE username=?", (username,))
         total = cur.fetchone()[0]
 
+        # average probability
         cur.execute("SELECT AVG(Probability) FROM data_overview WHERE username=?", (username,))
         avg_prob = cur.fetchone()[0]
         if avg_prob is None:
             avg_prob = 0
 
-
-        cur.execute("SELECT COUNT(*) FROM data_overview WHERE Probability > 0.7 AND username=?", (username,))
+        # high risk count
+        cur.execute("""
+        SELECT COUNT(*) FROM data_overview 
+        WHERE Prediction = 1 AND username=?
+        """, (username,))
         high_risk = cur.fetchone()[0]
-
         return total, avg_prob, high_risk
     finally:
         con.close()
 
 #update data
-def update_prediction(username, customer_id, prediction, probability):
+def update_prediction(id, username, prediction, probability):
     con = get_connection()
     try:
         cur = con.cursor()
@@ -173,25 +198,11 @@ def update_prediction(username, customer_id, prediction, probability):
             UPDATE data_overview
             SET Prediction = ?, Probability = ?
             WHERE id = ? AND username = ?
-        """, (prediction, probability, customer_id, username))
+        """, (prediction, probability, id, username))
         con.commit()
-        return cur.rowcount != 0
+        return cur.rowcount > 0
     finally:
         con.close()
-
-#create user table
-def create_user_table():
-    con=get_connection()
-    cur=con.cursor()
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )
-    """)
-    con.commit()
-    con.close()
 
 #signup function
 def signup_user(username, password):
