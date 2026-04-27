@@ -13,13 +13,13 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 #Data load
-data=pd.read_csv("data/processed/final_data.csv")
+data=pd.read_csv("data/processed/merged_data.csv")
 
 #data cleaning
 #Remove infinite values
 data.replace([np.inf,-np.inf],np.nan,inplace=True)
 #drop nan 
-data.dropna(inplace=True)
+data.dropna(subset=['Churn'],inplace=True)
 
 X = data.drop(columns=['Customer ID','Churn'])
 y = data['Churn'].map({"Yes":1, "No":0})
@@ -27,7 +27,7 @@ y = data['Churn'].map({"Yes":1, "No":0})
 #save col for streamlit
 joblib.dump(X.columns,"columns.pkl")
 
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=42)
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=42,stratify=y)
 
 #preprocessing 
 num_cols = X.select_dtypes(include=['int64', 'float64']).columns 
@@ -73,76 +73,40 @@ param_grids = {
 #Training
 best_score = 0
 best_model_final = None
+best_model_name = ""
 
 for name, model in models.items():
-    print(f"\n Training Model:{name}")
+    print(f"\n========== {name} ==========")
 
-#pipeline with preprocessing
     pipeline = Pipeline([
         ("preprocessing", preprocessor),
         ("model", model)
     ])
 
-    #Use pipeline (not Pipeline class)
     grid = GridSearchCV(pipeline, param_grids[name], cv=5, n_jobs=-1)
     grid.fit(X_train, y_train)
-    
-    #best estimator
+
     best_model = grid.best_estimator_
 
     preds = best_model.predict(X_test)
+    probs = best_model.predict_proba(X_test)[:, 1]
 
-    probs = best_model.predict_proba(X_test)[:,1]
-
-    acc=accuracy_score(y_test,preds)
     roc = roc_auc_score(y_test, probs)
-    
-    print("Accuracy Score",acc)
+
     print("ROC AUC:", roc)
-
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, preds))
-
-    print("Classification Report:")
-    print(classification_report(y_test, preds))
+    print("Confusion Matrix:\n", confusion_matrix(y_test, preds))
+    print("Classification Report:\n", classification_report(y_test, preds))
 
     if roc > best_score:
         best_score = roc
         best_model_final = best_model
+        best_model_name = name
 
-# Feature Importance
-# Safely handle both pipeline and raw model
-if isinstance(best_model_final, Pipeline):
-    model_obj = best_model_final.named_steps["model"]
-    try:
-        feature_names = best_model_final.named_steps["preprocessing"].get_feature_names_out()
-    except:
-        feature_names = X.columns
-else:
-    model_obj = best_model_final
-    feature_names = X.columns
+joblib.dump({
+    "model": best_model_final,
+    "model_name": best_model_name
+}, "bestt_model.pkl")
 
-# Feature importance only for tree-based models
-if hasattr(model_obj, "feature_importances_"):
-    importances = model_obj.feature_importances_
-    feature_importance = pd.DataFrame({
-        "Feature": feature_names,
-        "Importance": importances
-    }).sort_values(by="Importance", ascending=False)
-    
-    print("\nTop Features:")
-    print(feature_importance.head(20))
-else:
-    print("Feature importance not available for this model.")
-
-# Save by own after check
-# if name == "AdaBoost":
-#     joblib.dump(best_model, "adaboost_model.pkl")
-
-        #automatically saved
-
-# Save Final Model 
-joblib.dump(best_model_final, "bestt_model.pkl")
-print("Best model saved successfully!")
-
-
+print("\nBest Model:", best_model_name)
+print("Best ROC AUC:", best_score)
+print("Model saved at bestt_model.pkl")

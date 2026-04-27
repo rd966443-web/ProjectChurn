@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 import joblib
 
-model=joblib.load("bestt_model.pkl")
+# load
+loaded = joblib.load("bestt_model.pkl")
+model = loaded["model"]
+
+cols = joblib.load("columns.pkl")
 
 #new data
 data=pd.DataFrame([{

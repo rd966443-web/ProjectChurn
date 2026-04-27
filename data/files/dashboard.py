@@ -490,7 +490,7 @@ elif page=="✔️Prediction":
     st.caption("💡 Higher probability means higher churn risk.")
 
     # Show which model is being used
-    st.markdown("🧠 Prediction Model: **AdaBoostClassifier (Best Model)**")
+    st.markdown("🧠 Prediction Model: **Logistic Regression(Best Model)**")
 
     # Check if data exists
     if "input_data" not in st.session_state:
