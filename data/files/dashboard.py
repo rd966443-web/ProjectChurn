@@ -7,21 +7,56 @@ import joblib
 import os
 import sklearn
 import connection
+            
+#protected check
+def check_login():
+    if not st.session_state["logged_in"]:
+        st.warning("🔐 Please login first")
+        st.stop()
 
+st.set_page_config(page_title="Churn Prediction", layout="wide")
+
+#DB initialization
 if "db_initialized" not in st.session_state:
     connection.create_user_table()   # user table
     connection.create_table()        # data table
     st.session_state["db_initialized"] = True
 
-# WORKS ON LOCAL + CLOUD
+# WORKS ON LOCAL + CLOUD->paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # data/files
 DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, "..")) # data
 
-# Model path
+# Load Model 
 model_path = os.path.join(DATA_DIR, "bestt_model.pkl")
-model = joblib.load(model_path)
+if os.path.exists(model_path):
+    model = joblib.load(model_path)
+else:
+    st.error("❌ Model file not found")
+    st.stop()
+    
+# Session
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
 
-st.set_page_config(page_title="Churn Prediction", layout="wide")
+if "page" not in st.session_state:
+    st.session_state["page"] = "🏠 Home"
+
+#background image function
+import base64
+def set_bg(image_file):
+    with open(image_file, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{encoded}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
 # Custom Theme via CSS
 st.markdown("""
 <style>
@@ -61,86 +96,48 @@ section[data-testid="stSidebar"] {
 </style>
 """, unsafe_allow_html=True)
 
-#for bg img
-import base64
-def get_base64(img_path):
-    with open(img_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
 # Sidebar Navigation
 image_path = os.path.join(DATA_DIR,"Images", "churn_logo.jpg")
 
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+if os.path.exists(image_path):
+    st.sidebar.image(image_path)
 
-if "logout_msg" in st.session_state:
-    st.success(st.session_state["logout_msg"])
-    del st.session_state["logout_msg"]
-
-if not st.session_state["logged_in"]: 
-
-    background_img = os.path.join(DATA_DIR, "Images", "Login_Signup.jpg")
-    img = get_base64(background_img)
-
-    st.markdown(f"""
-    <style>
-    .stApp {{
-        background: url("data:image/jpg;base64,{img}") no-repeat center center fixed;
-        background-size: cover;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-    st.title("🔒 Login/Sign Up")
-
-    menu=["Login","Sign Up"]
-    choice=st.selectbox("Select Option",menu)
-
-    username=st.text_input("Username")
-    password=st.text_input("Password",type="password")
-
-    if choice=="Sign Up":
-        if st.button("Create Account"):
-            if not username or not password:
-                st.warning("⚠️ Please enter username and password")
-            else:
-                if connection.signup_user(username, password):
-                    st.success("✅ Account created successfully! Please Login.")
-                else:
-                    st.error("❌ Username already exists")
-        
-    elif choice=="Login":
-        if st.button("Login"):
-            if not username or not password:
-                st.warning("⚠️ Please enter username and password")
-            else:
-                user = connection.login_user(username,password)
-                if user:
-                    st.success("✅Logged in successfully!")
-                    st.session_state["logged_in"] = True
-                    st.session_state["username"] = username 
-                    st.rerun()
-                else:
-                    st.error("❌Invalid Credentials")
-    st.stop()  #stop further execution until login
-
-st.sidebar.image(image_path, width="stretch")
 st.sidebar.markdown("## 💡 Customer Intelligence & Churn Prediction System")
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 🚀 Control Center")
-page = st.sidebar.radio("🚀 Explore App", [
-    "🏠 Home",
-    "📊 Data Overview",
-    "📈Exploratory Data Analysis(EDA)",
-    "📌 Feature Insights",
-    "📌 Customer Segments",
-    "✔️Prediction",
-    "📂 Saved Data",
-    "📊 Model Performance"
-])
-if st.sidebar.button("🚪 Logout"):
-    st.session_state["logged_in"] = False
-    st.session_state["logout_msg"] = "👋 Logged out successfully!"
-    st.rerun()
+
+if st.session_state["logged_in"]:
+    menu = [
+        "🏠 Home",
+        "📊 Data Overview",
+        "📈Exploratory Data Analysis(EDA)",
+        "📌 Feature Insights",
+        "📌 Customer Segments",
+        "✔️Prediction",
+        "📂 Saved Data",
+        "📊 Model Performance"
+    ]
+else:
+    menu = ["🏠 Home", "📝 Sign Up", "🔐 Login"]
+current_page = st.session_state.get("page", "🏠 Home")
+
+if current_page not in menu:
+    current_page = "🏠 Home"
+
+page = st.sidebar.radio(
+    "🚀Explore App",
+    menu,
+    index=menu.index(current_page)
+)
+
+st.session_state["page"] = page
+
+if st.session_state["logged_in"]:
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state["logged_in"] = False
+        st.session_state["page"] = "🏠 Home"
+        st.rerun()
+
 st.sidebar.info("""
 👩‍💻 Built by:Ramandeep Chounkaria
 """)
@@ -171,12 +168,53 @@ if page == "🏠 Home":
         st.markdown("---")
         st.write("**Know your Customers, Stop the Churn**")
         st.markdown("---")
+     
     home_img = os.path.join(DATA_DIR,"Images", "Customer_Churn.png")
     st.image(home_img)
 
-#Data Overview
+#signup
+elif page == "📝 Sign Up":
+    bg_path = os.path.join(DATA_DIR, "Images", "sign__up.jpg")
+    set_bg(bg_path)
+    
+    st.title("📝 Create Account")
+    st.info("Create your account to access predictions, analytics, and save your data securely.")
+    st.caption("💡 Use a unique username and a strong password for better security.")
 
+    username = st.text_input("New Username")
+    password = st.text_input("New Password", type="password")
+
+    if st.button("Create Account"):
+        if connection.signup_user(username, password):
+            st.success("✅ Account created! Go to Login.")
+        else:
+            st.error("❌ Username already exists")
+
+#login
+elif page == "🔐 Login":
+    bg_path = os.path.join(DATA_DIR, "Images", "login.jpg")
+    set_bg(bg_path)
+    
+    st.title("🔒 Login")
+    st.info("Login to access your dashboard, predictions, and saved records.")
+    st.caption("💡 Enter your registered username and password.")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        user = connection.login_user(username, password)
+        if user:
+            st.session_state["logged_in"] = True
+            st.session_state["username"] = username
+            st.success("✅ Logged in successfully!")
+            st.rerun()
+        else:
+            st.error("❌ Invalid credentials")
+
+#Data Overview
 elif page == "📊 Data Overview":
+    check_login()
     st.title("📊 Data Overview")
 
     st.info("Enter customer details carefully. This data will be used for churn prediction.")
@@ -236,6 +274,7 @@ elif page == "📊 Data Overview":
     
 #EDA
 elif page == "📈Exploratory Data Analysis(EDA)":
+    check_login()
     st.title("📈Exploratory Data Analysis(EDA)")
 
     st.info("Explore patterns and trends in customer data to understand churn behaviour.")
@@ -317,7 +356,6 @@ elif page == "📈Exploratory Data Analysis(EDA)":
         sns.heatmap(temp_data.corr(), annot=False, linewidths=0.5)
         st.pyplot(fig)
                
-
     #TAB 3 →Workflow
     with tab3:
         st.write("""
@@ -326,8 +364,8 @@ elif page == "📈Exploratory Data Analysis(EDA)":
         st.success("✅ Now, Go to the Feature Insights Page")
    
 # Feature Insights Page->model konse feature k basis par pred kr rha hai 
-
 elif page == "📌 Feature Insights":
+    check_login()
     st.title("📌 Feature Importance & Insights")
 
     st.info("This section shows which features influence the model's prediction the most.")
@@ -387,6 +425,7 @@ elif page == "📌 Feature Insights":
 # Customer Segments Page
 
 elif page == "📌 Customer Segments":
+    check_login()
     st.title("📌 Customer Segmentation (KMeans Clustering)")
 
     st.info("Customers are grouped into clusters based on similar behavior.")
@@ -484,6 +523,7 @@ elif page == "📌 Customer Segments":
 # prediction
 
 elif page=="✔️Prediction":
+    check_login()
     st.title("✔️Customer Churn Prediction")
 
     st.info("Predict whether a customer is likely to churn based on input data.")
@@ -543,6 +583,7 @@ elif page=="✔️Prediction":
               st.balloons()
  
 elif page == "📂 Saved Data":
+    check_login()
     st.title(f"📂 {st.session_state['username']}'s Saved Predictions")
     st.info("View and manage all saved customer predictions.")
     st.caption("💡 You can update, search, or delete records.")
@@ -638,6 +679,7 @@ elif page == "📂 Saved Data":
 # Model Performance Page
 
 elif page == "📊 Model Performance":
+    check_login()
     st.title("📊 Model Performance Metrics")
 
     st.info("Evaluate how well the model performs on the dataset.")
